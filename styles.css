@@ -1,3 +1,4 @@
+/* General */
 body {
     margin: 0;
     padding: 0;
@@ -47,6 +48,77 @@ nav ul li:hover {
     padding: 20px;
 }
 
+/* Estilos de las pistas */
+.track-item {
+    background-color: #2a2a2a;
+    padding: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.track-item:hover {
+    background-color: #3a3a3a;
+}
+
+.track-info h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #fff;
+}
+
+.track-info p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #999;
+}
+
+/* Barra de búsqueda */
+.search-bar {
+    width: 100%;
+    padding: 20px;
+    background-color: #1a1a1a;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 20px;
+    border: none;
+    background-color: #2a2a2a;
+    color: #fff;
+}
+
+/* Diálogo de la playlist */
+.playlist-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.playlist-dialog-content {
+    background-color: #2a2a2a;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+}
+
+.playlist-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #3a3a3a;
+}
+
+/* Controles del reproductor */
 .player-controls {
     position: fixed;
     bottom: 0;
@@ -77,4 +149,26 @@ nav ul li:hover {
     width: 0%;
     height: 100%;
     background-color: #00a8e8;
+}
+
+/* Ahora reproduciendo */
+.now-playing {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    background-color: #1a1a1a;
+    text-align: center;
+}
+
+.song-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.artist-name {
+    font-size: 14px;
+    color: #999;
 }

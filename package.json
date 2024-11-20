@@ -2,7 +2,7 @@
   "name": "app-reproductor",
   "version": "1.0.0",
   "description": "musica",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,5 +18,9 @@
   "homepage": "https://github.com/BrayanRuiz77/app-reproductor#readme",
   "devDependencies": {
     "electron": "^33.2.0"
+  },
+  "dependencies": {
+    "electron-store": "^10.0.0",
+    "music-metadata": "^10.6.0"
   }
 }
