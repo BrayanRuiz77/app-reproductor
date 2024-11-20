@@ -1,0 +1,49 @@
+// index.html
+`<!DOCTYPE html>
+<html>
+<head>
+    <title>N7 Music Player</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">Music Player</div>
+        <nav>
+            <ul>
+                <li><i class="icon-tracks"></i> Tracks</li>
+                <li><i class="icon-albums"></i> Albums</li>
+                <li><i class="icon-artists"></i> Artists</li>
+                <li><i class="icon-playlists"></i> Playlists</li>
+                <li><i class="icon-genres"></i> Genres</li>
+            </ul>
+        </nav>
+    </div>
+    
+    <div class="main-content">
+        <div class="header">
+            <div class="search-bar">
+                <input type="text" placeholder="Search...">
+            </div>
+            <div class="now-playing">
+                <span class="song-title"></span>
+                <span class="artist-name"></span>
+            </div>
+        </div>
+        
+        <div class="music-grid" id="musicGrid"></div>
+    </div>
+
+    <div class="player-controls">
+        <div class="controls">
+            <button id="prevBtn">Previous</button>
+            <button id="playBtn">Play</button>
+            <button id="nextBtn">Next</button>
+        </div>
+        <div class="progress-bar">
+            <div class="progress"></div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>`

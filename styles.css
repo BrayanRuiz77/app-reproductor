@@ -1,0 +1,80 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    display: flex;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #0d0d0d;
+    height: 100vh;
+    padding: 20px;
+}
+
+.logo {
+    font-size: 24px;
+    margin-bottom: 30px;
+    color: #00a8e8;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+nav ul li {
+    padding: 12px 0;
+    cursor: pointer;
+    color: #999;
+}
+
+nav ul li:hover {
+    color: #fff;
+}
+
+.main-content {
+    flex: 1;
+    padding: 20px;
+}
+
+.music-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.player-controls {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #0d0d0d;
+    padding: 15px;
+    text-align: center;
+}
+
+.controls button {
+    background-color: #00a8e8;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    margin: 0 10px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 5px;
+    background-color: #333;
+    margin-top: 10px;
+}
+
+.progress {
+    width: 0%;
+    height: 100%;
+    background-color: #00a8e8;
+}
