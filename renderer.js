@@ -1,15 +1,18 @@
+// renderer.js
 class MusicPlayer {
     constructor() {
         this.audioPlayer = new Audio()
         this.playlist = []
         this.currentTrackIndex = 0
         this.musicLibrary = []
-        this.isPlaying = false // Control del estado de reproducción
         this.initializeEventListeners()
     }
 
     initializeEventListeners() {
-        // Botones de control de reproducción
+        // Botón de cargar música
+        document.getElementById('loadMusicBtn').addEventListener('click', () => this.loadMusicFolder())
+
+        // Controles de reproducción
         document.getElementById('playBtn').addEventListener('click', () => this.togglePlay())
         document.getElementById('nextBtn').addEventListener('click', () => this.playNext())
         document.getElementById('prevBtn').addEventListener('click', () => this.playPrevious())
@@ -20,112 +23,134 @@ class MusicPlayer {
         
         // Barra de progreso clickeable
         document.querySelector('.progress-bar').addEventListener('click', (e) => this.seek(e))
-
-        // Botón para cargar música
-        document.getElementById('loadMusicBtn').addEventListener('click', () => this.loadMusicFolder())
     }
 
     async loadMusicFolder() {
-        const folderPath = await window.electron.invoke('select-music-folder')
-        if (folderPath) {
-            const musicFiles = await this.scanMusicFiles(folderPath)
-            this.musicLibrary = await this.parseMusicMetadata(musicFiles)
-            this.displayLibrary()
+        try {
+            const result = await dialog.showOpenDialog({
+                properties: ['openDirectory']
+            });
+            
+            if (!result.canceled) {
+                const folderPath = result.filePaths[0];
+                console.log('Folder selected:', folderPath);
+                await this.scanMusicFiles(folderPath);
+            }
+        } catch (error) {
+            console.error('Error al cargar la carpeta de música:', error);
         }
     }
 
     async scanMusicFiles(folderPath) {
-        const files = await window.electron.invoke('read-folder', folderPath)
-        return files
-            .filter(file => ['.mp3', '.wav', '.ogg'].includes(path.extname(file).toLowerCase()))
-            .map(file => path.join(folderPath, file))
-    }
+        try {
+            const files = await fs.promises.readdir(folderPath);
+            const musicFiles = files.filter(file => 
+                ['.mp3', '.wav', '.ogg'].includes(path.extname(file).toLowerCase())
+            );
 
-    async parseMusicMetadata(files) {
-        const library = []
-        for (const file of files) {
-            try {
-                const metadata = await window.electron.invoke('parse-metadata', file)
-                library.push({
-                    path: file,
-                    title: metadata.title || path.basename(file),
-                    artist: metadata.artist || 'Unknown Artist',
-                    album: metadata.album || 'Unknown Album',
-                    duration: metadata.duration
-                })
-            } catch (error) {
-                console.error(`Error parsing metadata for ${file}:`, error)
+            this.musicLibrary = [];
+            for (const file of musicFiles) {
+                const filePath = path.join(folderPath, file);
+                try {
+                    // Crear un objeto básico para cada archivo de música
+                    const track = {
+                        path: filePath,
+                        title: path.basename(file, path.extname(file)),
+                        artist: 'Desconocido',
+                        album: 'Desconocido'
+                    };
+                    this.musicLibrary.push(track);
+                } catch (error) {
+                    console.error(`Error al procesar el archivo ${file}:`, error);
+                }
             }
+
+            this.displayLibrary();
+        } catch (error) {
+            console.error('Error al escanear archivos:', error);
         }
-        return library
     }
 
     displayLibrary() {
-        const musicGrid = document.getElementById('musicGrid')
-        musicGrid.innerHTML = ''
+        const musicGrid = document.getElementById('musicGrid');
+        musicGrid.innerHTML = '';
         
         this.musicLibrary.forEach((track, index) => {
-            const trackElement = document.createElement('div')
-            trackElement.className = 'track-item'
+            const trackElement = document.createElement('div');
+            trackElement.className = 'track-item';
             trackElement.innerHTML = `
                 <div class="track-info">
                     <h3>${track.title}</h3>
                     <p>${track.artist}</p>
                     <p>${track.album}</p>
                 </div>
-            `
-            trackElement.addEventListener('click', () => this.playTrack(index))
-            musicGrid.appendChild(trackElement)
-        })
+            `;
+            trackElement.addEventListener('click', () => this.playTrack(index));
+            musicGrid.appendChild(trackElement);
+        });
     }
 
     playTrack(index) {
-        this.currentTrackIndex = index
-        const track = this.musicLibrary[index]
-        this.audioPlayer.src = track.path
-        this.audioPlayer.play()
-        this.isPlaying = true
-        this.updateNowPlaying()
+        this.currentTrackIndex = index;
+        const track = this.musicLibrary[index];
+        this.audioPlayer.src = track.path;
+        this.audioPlayer.play();
+        this.updateNowPlaying();
+        
+        // Actualizar el botón de reproducción
+        document.getElementById('playBtn').textContent = 'Pausar';
     }
 
     togglePlay() {
         if (this.audioPlayer.paused) {
-            this.audioPlayer.play()
-            this.isPlaying = true
+            this.audioPlayer.play();
+            document.getElementById('playBtn').textContent = 'Pausar';
         } else {
-            this.audioPlayer.pause()
-            this.isPlaying = false
+            this.audioPlayer.pause();
+            document.getElementById('playBtn').textContent = 'Reproducir';
         }
-        document.getElementById('playBtn').textContent = this.isPlaying ? 'Pause' : 'Play'
     }
 
     playNext() {
-        this.currentTrackIndex = (this.currentTrackIndex + 1) % this.musicLibrary.length
-        this.playTrack(this.currentTrackIndex)
+        if (this.musicLibrary.length > 0) {
+            this.currentTrackIndex = (this.currentTrackIndex + 1) % this.musicLibrary.length;
+            this.playTrack(this.currentTrackIndex);
+        }
     }
 
     playPrevious() {
-        this.currentTrackIndex = (this.currentTrackIndex - 1 + this.musicLibrary.length) % this.musicLibrary.length
-        this.playTrack(this.currentTrackIndex)
+        if (this.musicLibrary.length > 0) {
+            this.currentTrackIndex = (this.currentTrackIndex - 1 + this.musicLibrary.length) % this.musicLibrary.length;
+            this.playTrack(this.currentTrackIndex);
+        }
     }
 
     updateProgress() {
-        const progress = (this.audioPlayer.currentTime / this.audioPlayer.duration) * 100
-        document.querySelector('.progress').style.width = `${progress}%`
+        if (this.audioPlayer.duration) {
+            const progress = (this.audioPlayer.currentTime / this.audioPlayer.duration) * 100;
+            document.querySelector('.progress').style.width = `${progress}%`;
+        }
     }
 
     seek(event) {
-        const progressBar = document.querySelector('.progress-bar')
-        const percent = event.offsetX / progressBar.offsetWidth
-        this.audioPlayer.currentTime = percent * this.audioPlayer.duration
+        const progressBar = document.querySelector('.progress-bar');
+        const percent = event.offsetX / progressBar.offsetWidth;
+        this.audioPlayer.currentTime = percent * this.audioPlayer.duration;
     }
 
     updateNowPlaying() {
-        const track = this.musicLibrary[this.currentTrackIndex]
-        document.querySelector('.song-title').textContent = track.title
-        document.querySelector('.artist-name').textContent = track.artist
+        const track = this.musicLibrary[this.currentTrackIndex];
+        document.querySelector('.song-title').textContent = track.title;
+        document.querySelector('.artist-name').textContent = track.artist;
     }
 }
 
+// Importaciones necesarias
+const { dialog } = require('electron').remote;
+const fs = require('fs');
+const path = require('path');
+
 // Inicializar el reproductor
-const player = new MusicPlayer()
+document.addEventListener('DOMContentLoaded', () => {
+    const player = new MusicPlayer();
+});
