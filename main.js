@@ -1,46 +1,39 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron')
-const path = require('path')
 const fs = require('fs')
+const path = require('path')
+const mm = require('music-metadata')
 
-function createWindow () {
-    const win = new BrowserWindow({
-        width: 1200,
-        height: 800,
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
-            enableRemoteModule: true
-        }
-    })
+function createWindow() {
+  const win = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    },
+    backgroundColor: '#1a1a1a'
+  })
 
-    // Cargar el archivo index.html
-    win.loadFile('index.html')
-    
-    // Opcional: Abrir las herramientas de desarrollo
-    // win.webContents.openDevTools()
+  win.loadFile('index.html')
 }
 
+// Configurar IPC para comunicación entre procesos
+ipcMain.handle('select-music-folder', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  })
+  if (!result.canceled) {
+    return result.filePaths[0]
+  }
+  return null
+})
+
 app.whenReady().then(() => {
-    require('@electron/remote/main').initialize()
-    createWindow()
+  createWindow()
 })
 
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit()
-    }
-})
-
-app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow()
-    }
-})
-
-// Manejar la selección de carpeta de música
-ipcMain.handle('select-music-folder', async () => {
-    const result = await dialog.showOpenDialog({
-        properties: ['openDirectory']
-    })
-    return result.canceled ? null : result.filePaths[0]
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
 })
