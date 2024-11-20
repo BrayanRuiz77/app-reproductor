@@ -1,0 +1,19 @@
+{
+  "name": "app-reproductor",
+  "version": "1.0.0",
+  "description": "musica",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BrayanRuiz77/app-reproductor.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BrayanRuiz77/app-reproductor/issues"
+  },
+  "homepage": "https://github.com/BrayanRuiz77/app-reproductor#readme"
+}
