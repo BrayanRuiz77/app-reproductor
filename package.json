@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/BrayanRuiz77/app-reproductor/issues"
   },
-  "homepage": "https://github.com/BrayanRuiz77/app-reproductor#readme"
+  "homepage": "https://github.com/BrayanRuiz77/app-reproductor#readme",
+  "devDependencies": {
+    "electron": "^33.2.0"
+  }
 }
