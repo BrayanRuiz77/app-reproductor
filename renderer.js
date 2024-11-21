@@ -1,28 +1,63 @@
-// renderer.js
+const { dialog } = require('electron').remote;
+const fs = require('fs');
+const path = require('path');
+
 class MusicPlayer {
     constructor() {
-        this.audioPlayer = new Audio()
-        this.playlist = []
-        this.currentTrackIndex = 0
-        this.musicLibrary = []
-        this.initializeEventListeners()
+        this.audioPlayer = new Audio();
+        this.playlist = [];
+        this.currentTrackIndex = 0;
+        this.musicLibrary = [];
+        this.initializeEventListeners();
+        this.initializeNavigation();
     }
 
+    // Inicializar eventos
     initializeEventListeners() {
-        // Botón de cargar música
-        document.getElementById('loadMusicBtn').addEventListener('click', () => this.loadMusicFolder())
+        const loadMusicBtn = document.getElementById('loadMusicBtn');
+        const playBtn = document.getElementById('playBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const progressBar = document.querySelector('.progress-bar');
 
-        // Controles de reproducción
-        document.getElementById('playBtn').addEventListener('click', () => this.togglePlay())
-        document.getElementById('nextBtn').addEventListener('click', () => this.playNext())
-        document.getElementById('prevBtn').addEventListener('click', () => this.playPrevious())
-        
-        // Progreso de la canción
-        this.audioPlayer.addEventListener('timeupdate', () => this.updateProgress())
-        this.audioPlayer.addEventListener('ended', () => this.playNext())
-        
-        // Barra de progreso clickeable
-        document.querySelector('.progress-bar').addEventListener('click', (e) => this.seek(e))
+        if (loadMusicBtn) loadMusicBtn.addEventListener('click', () => this.loadMusicFolder());
+        if (playBtn) playBtn.addEventListener('click', () => this.togglePlay());
+        if (nextBtn) nextBtn.addEventListener('click', () => this.playNext());
+        if (prevBtn) prevBtn.addEventListener('click', () => this.playPrevious());
+        if (progressBar) progressBar.addEventListener('click', (e) => this.seek(e));
+
+        this.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
+        this.audioPlayer.addEventListener('ended', () => this.playNext());
+    }
+
+    // Inicializar navegación
+    initializeNavigation() {
+        const navItems = document.querySelectorAll('.nav-item');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const section = item.getAttribute('data-section');
+                this.navigateToSection(section);
+            });
+        });
+    }
+
+    navigateToSection(sectionName) {
+        const sections = document.querySelectorAll('.section');
+        sections.forEach(sec => sec.classList.remove('active'));
+
+        const activeSection = document.getElementById(`${sectionName}-section`);
+        if (activeSection) {
+            activeSection.classList.add('active');
+        }
+
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('data-section') === sectionName) {
+                item.classList.add('active');
+            }
+        });
     }
 
     async loadMusicFolder() {
@@ -30,39 +65,34 @@ class MusicPlayer {
             const result = await dialog.showOpenDialog({
                 properties: ['openDirectory']
             });
-            
+
             if (!result.canceled) {
                 const folderPath = result.filePaths[0];
-                console.log('Folder selected:', folderPath);
                 await this.scanMusicFiles(folderPath);
             }
         } catch (error) {
             console.error('Error al cargar la carpeta de música:', error);
+            this.showErrorMessage('No se pudo cargar la carpeta de música');
         }
     }
 
     async scanMusicFiles(folderPath) {
         try {
             const files = await fs.promises.readdir(folderPath);
-            const musicFiles = files.filter(file => 
+            const musicFiles = files.filter(file =>
                 ['.mp3', '.wav', '.ogg'].includes(path.extname(file).toLowerCase())
             );
 
             this.musicLibrary = [];
             for (const file of musicFiles) {
                 const filePath = path.join(folderPath, file);
-                try {
-                    // Crear un objeto básico para cada archivo de música
-                    const track = {
-                        path: filePath,
-                        title: path.basename(file, path.extname(file)),
-                        artist: 'Desconocido',
-                        album: 'Desconocido'
-                    };
-                    this.musicLibrary.push(track);
-                } catch (error) {
-                    console.error(`Error al procesar el archivo ${file}:`, error);
-                }
+                const track = {
+                    path: filePath,
+                    title: path.basename(file, path.extname(file)),
+                    artist: 'Desconocido',
+                    album: 'Desconocido'
+                };
+                this.musicLibrary.push(track);
             }
 
             this.displayLibrary();
@@ -74,7 +104,12 @@ class MusicPlayer {
     displayLibrary() {
         const musicGrid = document.getElementById('musicGrid');
         musicGrid.innerHTML = '';
-        
+
+        if (this.musicLibrary.length === 0) {
+            musicGrid.innerHTML = '<p>No se encontraron archivos de música</p>';
+            return;
+        }
+
         this.musicLibrary.forEach((track, index) => {
             const trackElement = document.createElement('div');
             trackElement.className = 'track-item';
@@ -96,8 +131,7 @@ class MusicPlayer {
         this.audioPlayer.src = track.path;
         this.audioPlayer.play();
         this.updateNowPlaying();
-        
-        // Actualizar el botón de reproducción
+
         document.getElementById('playBtn').textContent = 'Pausar';
     }
 
@@ -143,12 +177,18 @@ class MusicPlayer {
         document.querySelector('.song-title').textContent = track.title;
         document.querySelector('.artist-name').textContent = track.artist;
     }
-}
 
-// Importaciones necesarias
-const { dialog } = require('electron').remote;
-const fs = require('fs');
-const path = require('path');
+    showErrorMessage(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        document.body.appendChild(errorDiv);
+
+        setTimeout(() => {
+            document.body.removeChild(errorDiv);
+        }, 5000);
+    }
+}
 
 // Inicializar el reproductor
 document.addEventListener('DOMContentLoaded', () => {
