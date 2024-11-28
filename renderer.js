@@ -1,26 +1,44 @@
-const { dialog } = require('electron').remote;
-const fs = require('fs');
-const path = require('path');
-
 class MusicPlayer {
     constructor() {
         this.audioPlayer = new Audio();
         this.playlist = [];
         this.currentTrackIndex = 0;
         this.musicLibrary = [];
+        this.playlists = {}; // { 'playlistName': [song1, song2, ...] }
+        this.currentPlaylist = null;
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.source = this.audioContext.createMediaElementSource(this.audioPlayer);
+        this.bassFilter = this.audioContext.createBiquadFilter();
+        this.midFilter = this.audioContext.createBiquadFilter();
+        this.trebleFilter = this.audioContext.createBiquadFilter();
         this.initializeEventListeners();
         this.initializeNavigation();
+        this.initializeFilters();
     }
 
-    // Inicializar eventos
     initializeEventListeners() {
         const loadMusicBtn = document.getElementById('loadMusicBtn');
         const playBtn = document.getElementById('playBtn');
         const nextBtn = document.getElementById('nextBtn');
         const prevBtn = document.getElementById('prevBtn');
         const progressBar = document.querySelector('.progress-bar');
+        const createPlaylistBtn = document.getElementById('createPlaylistBtn');
+        const savePlaylistBtn = document.getElementById('savePlaylistBtn');
+        const closeModal = document.querySelector('.close');
 
-        if (loadMusicBtn) loadMusicBtn.addEventListener('click', () => this.loadMusicFolder());
+        // Otros event listeners...
+
+        // Abrir modal para crear playlist
+        createPlaylistBtn.addEventListener('click', () => this.openCreatePlaylistModal());
+
+        // Guardar nueva playlist
+        savePlaylistBtn.addEventListener('click', () => this.saveNewPlaylist());
+
+        // Cerrar modal
+        closeModal.addEventListener('click', () => this.closeCreatePlaylistModal());
+
+        // Controles de reproducción
+        if (loadMusicBtn) loadMusicBtn.addEventListener('click', () => this.loadMusicFiles());
         if (playBtn) playBtn.addEventListener('click', () => this.togglePlay());
         if (nextBtn) nextBtn.addEventListener('click', () => this.playNext());
         if (prevBtn) prevBtn.addEventListener('click', () => this.playPrevious());
@@ -30,10 +48,9 @@ class MusicPlayer {
         this.audioPlayer.addEventListener('ended', () => this.playNext());
     }
 
-    // Inicializar navegación
     initializeNavigation() {
         const navItems = document.querySelectorAll('.nav-item');
-
+        
         navItems.forEach(item => {
             item.addEventListener('click', () => {
                 const section = item.getAttribute('data-section');
@@ -43,81 +60,175 @@ class MusicPlayer {
     }
 
     navigateToSection(sectionName) {
-        const sections = document.querySelectorAll('.section');
-        sections.forEach(sec => sec.classList.remove('active'));
-
-        const activeSection = document.getElementById(`${sectionName}-section`);
-        if (activeSection) {
-            activeSection.classList.add('active');
-        }
-
-        const navItems = document.querySelectorAll('.nav-item');
-        navItems.forEach(item => {
-            item.classList.remove('active');
-            if (item.getAttribute('data-section') === sectionName) {
-                item.classList.add('active');
-            }
-        });
-    }
-
-    async loadMusicFolder() {
-        try {
-            const result = await dialog.showOpenDialog({
-                properties: ['openDirectory']
-            });
-
-            if (!result.canceled) {
-                const folderPath = result.filePaths[0];
-                await this.scanMusicFiles(folderPath);
-            }
-        } catch (error) {
-            console.error('Error al cargar la carpeta de música:', error);
-            this.showErrorMessage('No se pudo cargar la carpeta de música');
+        switch(sectionName) {
+            case 'tracks':
+                this.displayLibrary(this.musicLibrary);
+                break;
+            case 'albums':
+                this.displayLibraryByAlbum();
+                break;
+            case 'artists':
+                this.displayLibraryByArtist();
+                break;
+            case 'playlists':
+                this.updatePlaylistsUI();
+                break;
+            case 'genres':
+                this.displayLibraryByGenre();
+                break;
+            default:
+                console.error('Sección desconocida:', sectionName);
         }
     }
 
-    async scanMusicFiles(folderPath) {
-        try {
-            const files = await fs.promises.readdir(folderPath);
-            const musicFiles = files.filter(file =>
-                ['.mp3', '.wav', '.ogg'].includes(path.extname(file).toLowerCase())
-            );
-
-            this.musicLibrary = [];
-            for (const file of musicFiles) {
-                const filePath = path.join(folderPath, file);
-                const track = {
-                    path: filePath,
-                    title: path.basename(file, path.extname(file)),
-                    artist: 'Desconocido',
-                    album: 'Desconocido'
-                };
-                this.musicLibrary.push(track);
-            }
-
-            this.displayLibrary();
-        } catch (error) {
-            console.error('Error al escanear archivos:', error);
-        }
+    displayLibraryByAlbum() {
+        const albums = this.groupBy(this.musicLibrary, 'album');
+        this.displayGroupedLibrary(albums);
     }
 
-    displayLibrary() {
+    displayLibraryByArtist() {
+        const artists = this.groupBy(this.musicLibrary, 'artist');
+        this.displayGroupedLibrary(artists);
+    }
+
+    displayLibraryByGenre() {
+        const genres = this.groupBy(this.musicLibrary, 'genre'); // Asegúrate de tener una propiedad `genre`
+        this.displayGroupedLibrary(genres);
+    }
+
+    groupBy(array, key) {
+        return array.reduce((result, currentValue) => {
+            (result[currentValue[key]] = result[currentValue[key]] || []).push(currentValue);
+            return result;
+        }, {});
+    }
+
+    displayGroupedLibrary(groupedData) {
         const musicGrid = document.getElementById('musicGrid');
         musicGrid.innerHTML = '';
 
-        if (this.musicLibrary.length === 0) {
+        for (const [groupName, tracks] of Object.entries(groupedData)) {
+            const groupElement = document.createElement('div');
+            groupElement.className = 'group-item';
+            groupElement.innerHTML = `<h3>${groupName}</h3>`;
+            
+            tracks.forEach(track => {
+                const trackElement = document.createElement('div');
+                trackElement.className = 'track-item';
+                trackElement.innerHTML = `
+                    <div class="track-info">
+                        <h3>${track.title}</h3>
+                        <p>Artista: ${track.artist}</p>
+                        <p>Álbum: ${track.album}</p>
+                        <p>Formato: ${track.format}</p>
+                    </div>
+                `;
+                trackElement.addEventListener('click', () => this.playTrack(this.musicLibrary.indexOf(track)));
+                groupElement.appendChild(trackElement);
+            });
+
+            musicGrid.appendChild(groupElement);
+        }
+    }
+
+    initializeFilters() { 
+        this.bassFilter.type = 'lowshelf';
+        this.bassFilter.frequency.value = 500;
+
+        this.midFilter.type = 'peaking';
+        this.midFilter.frequency.value = 1000;
+        this.midFilter.Q.value = 1;
+
+        this.trebleFilter.type = 'highshelf';
+        this.trebleFilter.frequency.value = 3000;
+
+        this.source.connect(this.bassFilter);
+        this.bassFilter.connect(this.midFilter);
+        this.midFilter.connect(this.trebleFilter);
+        this.trebleFilter.connect(this.audioContext.destination);
+
+        document.getElementById('bass').addEventListener('input', (e) => {
+            this.bassFilter.gain.value = e.target.value;
+        });
+
+        document.getElementById('mid').addEventListener('input', (e) => {
+            this.midFilter.gain.value = e.target.value;
+        });
+
+        document.getElementById('treble').addEventListener('input', (e) => {
+            this.trebleFilter.gain.value = e.target.value;
+        });
+    }
+
+    openCreatePlaylistModal() {
+        const modal = document.getElementById('createPlaylistModal');
+        modal.style.display = 'block';
+    }
+
+    closeCreatePlaylistModal() {
+        const modal = document.getElementById('createPlaylistModal');
+        modal.style.display = 'none';
+    }
+
+    saveNewPlaylist() {
+        const playlistName = document.getElementById('newPlaylistName').value;
+        if (playlistName && !this.playlists[playlistName]) {
+            this.playlists[playlistName] = [];
+            this.updatePlaylistsUI();
+            this.closeCreatePlaylistModal();
+        }
+    }
+
+    updatePlaylistsUI() {
+        const playlistsContainer = document.getElementById('playlistsContainer');
+        playlistsContainer.innerHTML = '';
+
+        for (const [playlistName, songs] of Object.entries(this.playlists)) {
+            const playlistElement = document.createElement('div');
+            playlistElement.className = 'playlist-item';
+            playlistElement.innerHTML = `<span>${playlistName}</span>`;
+            playlistElement.addEventListener('click', () => this.selectPlaylist(playlistName));
+            playlistsContainer.appendChild(playlistElement);
+        }
+    }
+
+    selectPlaylist(playlistName) {
+        this.currentPlaylist = playlistName;
+        this.displayLibrary(this.playlists[playlistName]);
+    }
+
+    async loadMusicFiles() {
+        try {
+            const tracks = await window.electronAPI.loadMusicFiles();
+            if (tracks) {
+                this.musicLibrary = tracks;
+                this.displayLibrary();
+            } else {
+                console.error('No se cargaron archivos de música.');
+            }
+        } catch (error) {
+            console.error('Error al cargar los archivos de música:', error);
+        }
+    }
+
+    displayLibrary(tracks = this.musicLibrary) {
+        const musicGrid = document.getElementById('musicGrid');
+        musicGrid.innerHTML = '';
+
+        if (tracks.length === 0) {
             musicGrid.innerHTML = '<p>No se encontraron archivos de música</p>';
             return;
         }
 
-        this.musicLibrary.forEach((track, index) => {
+        tracks.forEach((track, index) => {
             const trackElement = document.createElement('div');
             trackElement.className = 'track-item';
             trackElement.innerHTML = `
                 <div class="track-info">
                     <h3>${track.title}</h3>
-                    <p>${track.artist}</p>
-                    <p>${track.album}</p>
+                    <p>Artista: ${track.artist}</p>
+                    <p>Álbum: ${track.album}</p>
+                    <p>Formato: ${track.format}</p>
                 </div>
             `;
             trackElement.addEventListener('click', () => this.playTrack(index));
@@ -132,16 +243,22 @@ class MusicPlayer {
         this.audioPlayer.play();
         this.updateNowPlaying();
 
-        document.getElementById('playBtn').textContent = 'Pausar';
+        // Cambiar el icono a pausar
+        const playBtnIcon = document.querySelector('#playBtn i');
+        playBtnIcon.classList.remove('fa-play');
+        playBtnIcon.classList.add('fa-pause');
     }
 
     togglePlay() {
+        const playBtnIcon = document.querySelector('#playBtn i');
         if (this.audioPlayer.paused) {
             this.audioPlayer.play();
-            document.getElementById('playBtn').textContent = 'Pausar';
+            playBtnIcon.classList.remove('fa-play');
+            playBtnIcon.classList.add('fa-pause');
         } else {
             this.audioPlayer.pause();
-            document.getElementById('playBtn').textContent = 'Reproducir';
+            playBtnIcon.classList.remove('fa-pause');
+            playBtnIcon.classList.add('fa-play');
         }
     }
 

@@ -1,20 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>N7 Music Player</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com;">
 </head>
 <body>
     <div class="sidebar">
         <div class="logo">Music Player</div>
         <button id="loadMusicBtn">Cargar Música</button>
+        <button id="createPlaylistBtn">Crear Lista</button>
+        <div id="playlistsContainer"></div>
         <nav>
             <ul>
-                <li><i class="icon-tracks"></i> Tracks</li>
-                <li><i class="icon-albums"></i> Albums</li>
-                <li><i class="icon-artists"></i> Artists</li>
-                <li><i class="icon-playlists"></i> Playlists</li>
-                <li><i class="icon-genres"></i> Genres</li>
+                <li class="nav-item" data-section="tracks"><i class="fas fa-music"></i> Tracks</li>
+                <li class="nav-item" data-section="albums"><i class="fas fa-compact-disc"></i> Albums</li>
+                <li class="nav-item" data-section="artists"><i class="fas fa-users"></i> Artists</li>
+                <li class="nav-item" data-section="playlists"><i class="fas fa-list"></i> Playlists</li>
+                <li class="nav-item" data-section="genres"><i class="fas fa-stream"></i> Genres</li>
             </ul>
         </nav>
     </div>
@@ -22,7 +28,7 @@
     <div class="main-content">
         <div class="header">
             <div class="search-bar">
-                <input type="text" placeholder="Search...">
+                <input type="text" placeholder="Buscar...">
             </div>
             <div class="now-playing">
                 <span class="song-title"></span>
@@ -35,12 +41,39 @@
 
     <div class="player-controls">
         <div class="controls">
-            <button id="prevBtn">Previous</button>
-            <button id="playBtn">Play</button>
-            <button id="nextBtn">Next</button>
+            <button id="prevBtn"><i class="fas fa-backward"></i></button>
+            <button id="playBtn"><i class="fas fa-play"></i></button>
+            <button id="nextBtn"><i class="fas fa-forward"></i></button>
         </div>
         <div class="progress-bar">
             <div class="progress"></div>
+        </div>
+    </div>
+
+    <!-- Sliders para el ecualizador -->
+    <div class="equalizer">
+        <h3>Ecualizador</h3>
+        <div>
+            <label for="bass">Bass</label>
+            <input type="range" id="bass" min="-10" max="10" value="0">
+        </div>
+        <div>
+            <label for="mid">Mid</label>
+            <input type="range" id="mid" min="-10" max="10" value="0">
+        </div>
+        <div>
+            <label for="treble">Treble</label>
+            <input type="range" id="treble" min="-10" max="10" value="0">
+        </div>
+    </div>
+
+    <!-- Modal para Crear Lista -->
+    <div id="createPlaylistModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Crear Lista de Reproducción</h2>
+            <input type="text" id="newPlaylistName" placeholder="Nombre de la lista">
+            <button id="savePlaylistBtn">Guardar</button>
         </div>
     </div>
 

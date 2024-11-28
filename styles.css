@@ -36,6 +36,10 @@ nav ul li:hover {
     color: #fff;
 }
 
+nav ul li i {
+    margin-right: 10px;
+}
+
 .main-content {
     flex: 1;
     padding: 20px;
@@ -48,7 +52,6 @@ nav ul li:hover {
     padding: 20px;
 }
 
-/* Estilos de las pistas */
 .track-item {
     background-color: #2a2a2a;
     padding: 15px;
@@ -73,7 +76,6 @@ nav ul li:hover {
     color: #999;
 }
 
-/* Barra de búsqueda */
 .search-bar {
     width: 100%;
     padding: 20px;
@@ -89,35 +91,6 @@ nav ul li:hover {
     color: #fff;
 }
 
-/* Diálogo de la playlist */
-.playlist-dialog {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.playlist-dialog-content {
-    background-color: #2a2a2a;
-    padding: 20px;
-    border-radius: 8px;
-    width: 300px;
-}
-
-.playlist-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid #3a3a3a;
-}
-
 /* Controles del reproductor */
 .player-controls {
     position: fixed;
@@ -129,13 +102,21 @@ nav ul li:hover {
 }
 
 .controls button {
-    background-color: #00a8e8;
+    background-color: transparent;
     border: none;
     color: white;
     padding: 10px 20px;
     margin: 0 10px;
-    border-radius: 20px;
     cursor: pointer;
+    font-size: 18px;
+}
+
+.controls button:focus {
+    outline: none;
+}
+
+.controls button i {
+    font-size: 24px;
 }
 
 .progress-bar {
@@ -151,7 +132,6 @@ nav ul li:hover {
     background-color: #00a8e8;
 }
 
-/* Ahora reproduciendo */
 .now-playing {
     position: fixed;
     bottom: 70px;
@@ -171,4 +151,61 @@ nav ul li:hover {
 .artist-name {
     font-size: 14px;
     color: #999;
+}
+
+/* Estilos del ecualizador */
+.equalizer {
+    padding: 20px;
+    background-color: #1a1a1a;
+}
+
+.equalizer h3 {
+    margin-top: 0;
+    color: #00a8e8;
+}
+
+.equalizer label {
+    display: block;
+    color: #fff;
+}
+
+.equalizer input[type="range"] {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* Estilos para el modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
 }

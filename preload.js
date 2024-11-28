@@ -1,5 +1,5 @@
-const { contextBridge, ipcRenderer } = require('electron')
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  loadMusicFolder: () => ipcRenderer.invoke('load-music-folder')
-})
+    loadMusicFiles: () => ipcRenderer.invoke('load-music-files')
+});
