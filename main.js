@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const NodeID3 = require('node-id3'); // Importa la biblioteca `node-id3`
 
+const musicLibraryPath = path.join(app.getPath('userData'), 'music-library.json'); // Ruta para guardar la biblioteca musical
+
 function createWindow() {
     const win = new BrowserWindow({
         width: 1200,
@@ -31,7 +33,9 @@ ipcMain.handle('load-music-files', async (event) => {
 
         if (!result.canceled && result.filePaths.length > 0) {
             const filePaths = result.filePaths;
-            return await readMusicFiles(filePaths);
+            const musicFiles = await readMusicFiles(filePaths);
+            saveMusicLibrary(musicFiles); // Guardar la biblioteca musical
+            return musicFiles;
         }
         return null;
     } catch (error) {
@@ -44,33 +48,33 @@ ipcMain.handle('load-music-files', async (event) => {
 async function readMusicFiles(filePaths) {
     const musicFiles = [];
 
-    try {
-        for (const file of filePaths) {
-            const ext = path.extname(file).toLowerCase();
-
-            if (ext === '.mp3') {
-                try {
-                    const tags = NodeID3.read(file); // Usar `NodeID3.read`
-                    musicFiles.push({
-                        path: file,
-                        filename: path.basename(file),
-                        title: tags.title || path.basename(file, ext),
-                        artist: tags.artist || 'Desconocido',
-                        album: tags.album || 'Desconocido',
-                        duration: 'Desconocido', // `node-id3` no proporciona duración
-                        format: ext
-                    });
-                } catch (error) {
-                    console.error(`Error leyendo metadatos de ${file}:`, error);
-                }
-            }
-        }
-
-        return musicFiles;
-    } catch (error) {
-        console.error('Error al leer archivos de música:', error);
-        return [];
+    for (const file of filePaths) {
+        const tags = NodeID3.read(file);
+        musicFiles.push({
+            path: file,
+            filename: path.basename(file),
+            title: tags.title || path.basename(file),
+            artist: tags.artist || 'Desconocido',
+            album: tags.album || 'Desconocido',
+            format: '.mp3',
+        });
     }
+
+    return musicFiles;
+}
+
+// Guardar la biblioteca musical en un archivo JSON
+function saveMusicLibrary(musicLibrary) {
+    fs.writeFileSync(musicLibraryPath, JSON.stringify(musicLibrary, null, 2));
+}
+
+// Cargar la biblioteca musical desde un archivo JSON
+function loadMusicLibrary() {
+    if (fs.existsSync(musicLibraryPath)) {
+        const musicLibraryData = fs.readFileSync(musicLibraryPath);
+        return JSON.parse(musicLibraryData);
+    }
+    return [];
 }
 
 app.whenReady().then(() => {
@@ -81,4 +85,10 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
+});
+
+// Proporcionar la biblioteca musical al frontend al iniciar la aplicación
+ipcMain.handle('get-music-library', async (event) => {
+    const musicLibrary = loadMusicLibrary();
+    return musicLibrary;
 });
