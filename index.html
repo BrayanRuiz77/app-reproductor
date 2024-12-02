@@ -22,6 +22,7 @@
                 <li class="nav-item" data-section="playlists"><i class="fas fa-list"></i> Playlists</li>
                 <li class="nav-item" data-section="genres"><i class="fas fa-stream"></i> Genres</li>
                 <li class="nav-item" data-section="equalizer"><i class="fas fa-sliders-h"></i> Equalizer</li>
+                <li class="nav-item" data-section="favorites"><i class="fas fa-heart"></i> Favoritas</li> <!-- Nuevo elemento del menú -->
             </ul>
         </nav>
     </div>
@@ -29,7 +30,7 @@
     <div class="main-content">
         <div class="header">
             <div class="search-bar">
-                <input type="text" placeholder="Buscar...">
+                <input type="text" id="searchInput" placeholder="Buscar canciones, álbumes, artistas...">
             </div>
             <div class="now-playing">
                 <span class="song-title"></span>
@@ -57,8 +58,8 @@
                 <input type="range" id="treble" min="-10" max="10" value="0">
             </div>
         </div>
+        <div id="favorites-section" class="section" style="display: none;"></div> <!-- Nueva sección de Favoritas -->
     </div>
-
     <div class="player-controls">
         <div class="controls">
             <button id="prevBtn"><i class="fas fa-backward"></i></button>
@@ -66,11 +67,16 @@
             <button id="nextBtn"><i class="fas fa-forward"></i></button>
             <button id="shuffleBtn"><i class="fas fa-random"></i></button>
             <button id="repeatBtn"><i class="fas fa-redo"></i></button>
+            <button id="favoriteBtn"><i class="fas fa-star"></i></button>
+            <input type="range" id="volumeControl" min="0" max="1" step="0.01" value="1" title="Volume"> <!-- Control de volumen -->
         </div>
         <div class="progress-bar">
             <div class="progress"></div>
         </div>
     </div>
+    
+    
+
     <div id="createPlaylistModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
